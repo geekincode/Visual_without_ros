@@ -56,6 +56,6 @@ private:
     // 模拟SLAM算法的处理
     void processingLoop();
     
-    // 生成模拟数据
-    void generateSimulatedData();
+    // 使用PCL生成模拟的密集运动点云
+    void generatePCLSimulatedData();
 };

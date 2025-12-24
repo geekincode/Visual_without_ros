@@ -6,6 +6,7 @@
 
 - 实时SLAM数据可视化（位姿、点云、坐标变换）
 - 使用Foxglove SDK进行WebSocket通信
+- 使用PCL库生成密集的运动点云数据
 - 模拟SLAM处理器用于演示
 - 与Foxglove Studio完全兼容
 
@@ -15,6 +16,7 @@
 - CMake 3.20 或更高版本
 - Boost (system, thread)
 - Protobuf
+- PCL (Point Cloud Library)
 - Foxglove SDK (自动下载)
 
 ## 构建
@@ -24,12 +26,6 @@ mkdir build
 cd build
 cmake ..
 make
-```
-
-或者使用提供的构建脚本：
-
-```bash
-./build.sh
 ```
 
 ## 运行
@@ -45,17 +41,24 @@ make
 项目包含以下数据流：
 
 - `/slam/pose`: 位姿信息 (foxglove.PoseInFrame)
-- `/slam/pointcloud`: 点云数据 (foxglove.PointCloud)
+- `/slam/pointcloud`: 点云数据 (foxglove.PointCloud)，使用PCL生成密集的环境点云，包括地面、墙壁、家具和动态移动的球体
 - `/tf`: 坐标变换 (foxglove.FrameTransform)
 
 ## Foxglove SDK
 
 本项目使用Foxglove SDK进行通信。SDK通过CMake的FetchContent模块自动下载。项目优先使用本地已下载的SDK文件，避免重复下载。
 
+## PCL集成
+
+项目集成了PCL（Point Cloud Library）来生成密集的运动点云数据：
+- 模拟真实环境，包括地面、墙壁和家具
+- 生成动态移动的球体，展示运动点云效果
+- 使用PCL的随机生成器创建规律分布的点云
+
 ## 项目结构
 
 - `include/slam_processor.h`: 模拟SLAM处理器头文件
-- `src/slam_processor.cpp`: 模拟SLAM处理器实现
+- `src/slam_processor.cpp`: 模拟SLAM处理器实现，包含PCL点云生成
 - `include/foxglove_bridge.h`: Foxglove桥接器头文件
 - `src/foxglove_bridge.cpp`: Foxglove桥接器实现
 - `src/main.cpp`: 主程序入口
@@ -66,8 +69,9 @@ make
 
 - SLAM算法开发与调试
 - 机器人定位可视化
-- 点云数据展示
+- 点云数据展示和处理
 - 传感器融合算法验证
+- 教育演示和原型开发
 
 ## 许可证
 

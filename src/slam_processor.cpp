@@ -1,14 +1,14 @@
 #include "slam_processor.h"
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/common/random.h>
 #include <iostream>
-#include <cmath>
 #include <random>
+#include <cmath>
 
-SLAMProcessor::SLAMProcessor() 
+SLAMProcessor::SLAMProcessor()
     : running_(false), 
-      current_pose_(0, 0, 0, 0, 0, 0, 1, 0),
-      map_points_() {
-    // 初始化一些随机地图点
-    generateSimulatedData();
+      current_pose_(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0) {  // 初始位姿为原点，无旋转
 }
 
 SLAMProcessor::~SLAMProcessor() {
@@ -43,21 +43,23 @@ void SLAMProcessor::processingLoop() {
 }
 
 void SLAMProcessor::processFrame() {
-    std::lock_guard<std::mutex> lock(data_mutex_);
+    // 更新位姿（模拟简单的运动）
+    auto now = std::chrono::high_resolution_clock::now();
+    auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
     
-    // 模拟SLAM位姿更新 - 简单的圆形轨迹
-    static auto start_time = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - start_time).count();
+    // 模拟一个圆形运动轨迹
+    double time_s = timestamp / 1000000000.0;
+    double radius = 2.0;
+    double x = radius * cos(time_s * 0.5);  // 每4π秒一圈
+    double y = radius * sin(time_s * 0.5);
+    double z = 1.0 + 0.5 * sin(time_s * 1.5);  // Z轴方向有小幅振荡
     
-    double time_sec = elapsed / 1000.0;
-    double x = 5 * cos(time_sec * 0.5);  // 圆形轨迹
-    double y = 5 * sin(time_sec * 0.5);
-    double z = 1 + sin(time_sec * 0.3);  // 上下波动
-    
-    // 更新当前位姿
-    current_pose_ = Pose(x, y, z, 0, 0, sin(time_sec*0.2), cos(time_sec*0.2), 
-                         static_cast<uint64_t>(elapsed * 1000000)); // 转换为纳秒
+    // 更新位姿
+    {
+        std::lock_guard<std::mutex> lock(data_mutex_);
+        current_pose_ = Pose(x, y, z, 0.0, 0.0, 0.0, 1.0, timestamp);
+        generatePCLSimulatedData();
+    }
 }
 
 Pose SLAMProcessor::getCurrentPose() {
@@ -70,16 +72,105 @@ std::vector<Point3D> SLAMProcessor::getCurrentMapPoints() {
     return map_points_;
 }
 
-void SLAMProcessor::generateSimulatedData() {
-    std::lock_guard<std::mutex> lock(data_mutex_);
+void SLAMProcessor::generatePCLSimulatedData() {
+    // 使用PCL生成密集的运动点云
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
     
-    // 生成模拟地图点 - 在一个立方体区域内随机分布点
+    // 生成一个"房间"的点云，包括地面、墙壁和一些物体
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(-10.0, 10.0);
+    std::uniform_real_distribution<> dis(-1.0, 1.0);
+    std::uniform_real_distribution<> dis_large(-5.0, 5.0);
     
-    map_points_.clear();
+    // 地面点 (z = 0)
     for (int i = 0; i < 500; ++i) {
-        map_points_.emplace_back(dis(gen), dis(gen), dis(gen));
+        pcl::PointXYZ point;
+        point.x = dis_large(gen);
+        point.y = dis_large(gen);
+        point.z = 0.0;
+        cloud->points.push_back(point);
+    }
+    
+    // 天花板点 (z = 3)
+    for (int i = 0; i < 500; ++i) {
+        pcl::PointXYZ point;
+        point.x = dis_large(gen);
+        point.y = dis_large(gen);
+        point.z = 3.0;
+        cloud->points.push_back(point);
+    }
+    
+    // 墙壁点
+    for (int i = 0; i < 300; ++i) {
+        pcl::PointXYZ point;
+        // X方向墙
+        point.x = 5.0;
+        point.y = dis_large(gen);
+        point.z = dis_large(gen) * 1.5 + 1.5;
+        cloud->points.push_back(point);
+        
+        // 另一面X方向墙
+        point.x = -5.0;
+        cloud->points.push_back(point);
+        
+        // Y方向墙
+        point.x = dis_large(gen);
+        point.y = 5.0;
+        point.z = dis_large(gen) * 1.5 + 1.5;
+        cloud->points.push_back(point);
+        
+        // 另一面Y方向墙
+        point.y = -5.0;
+        cloud->points.push_back(point);
+    }
+    
+    // 添加一些"家具"，如桌子和椅子
+    for (int i = 0; i < 200; ++i) {
+        pcl::PointXYZ point;
+        
+        // 桌面 (在(2,2,0)附近)
+        if (i % 3 == 0) {
+            point.x = 2.0 + dis(gen);
+            point.y = 2.0 + dis(gen);
+            point.z = 1.0;
+        } 
+        // 椅子
+        else if (i % 3 == 1) {
+            point.x = 2.5 + dis(gen) * 0.3;
+            point.y = 2.5 + dis(gen) * 0.3;
+            point.z = 0.5 + dis(gen) * 0.5;
+        }
+        // 装饰品
+        else {
+            point.x = 1.0 + dis(gen) * 0.5;
+            point.y = 1.0 + dis(gen) * 0.5;
+            point.z = 0.5 + dis(gen) * 1.5;
+        }
+        
+        cloud->points.push_back(point);
+    }
+    
+    // 添加一个旋转的球体，模拟动态物体
+    double time_s = current_pose_.timestamp / 1000000000.0;
+    double sphere_x = 1.0 + 2.0 * cos(time_s * 2.0);  // 球体在x方向移动
+    double sphere_y = 1.0 + 2.0 * sin(time_s * 2.0);  // 球体在y方向移动
+    double sphere_z = 1.0;
+    
+    for (int i = 0; i < 300; ++i) {
+        double theta = dis_large(gen) * M_PI;
+        double phi = dis_large(gen) * M_PI;
+        
+        pcl::PointXYZ point;
+        point.x = sphere_x + 0.5 * sin(theta) * cos(phi);
+        point.y = sphere_y + 0.5 * sin(theta) * sin(phi);
+        point.z = sphere_z + 0.5 * cos(theta);
+        
+        cloud->points.push_back(point);
+    }
+    
+    // 转换为Point3D向量
+    map_points_.clear();
+    for (const auto& pcl_point : cloud->points) {
+        map_points_.emplace_back(pcl_point.x, pcl_point.y, pcl_point.z);
     }
 }

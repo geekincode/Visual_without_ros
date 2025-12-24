@@ -7,9 +7,8 @@
 #include <chrono>
 
 FoxgloveBridge::FoxgloveBridge(std::shared_ptr<SLAMProcessor> slam_processor)
-    : slam_processor_(slam_processor), running_(false) {
+    : slam_processor_(slam_processor), server_(nullptr), running_(false) {
 }
-
 
 FoxgloveBridge::~FoxgloveBridge() {
     stop();
@@ -52,9 +51,6 @@ void FoxgloveBridge::stop() {
             broadcast_thread_.join();
         }
         
-        if (server_) {
-            server_->stop();
-        }
         if (server_) {
             server_->stop();
         }

@@ -44,11 +44,19 @@ endif()
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
 
+# Find PCL
+find_package(PCL REQUIRED)
+
 # Get Protobuf
 find_package(Protobuf REQUIRED)
 if(NOT PROTOBUF_FOUND)
     message(FATAL_ERROR "Protobuf is required")
 endif()
+
+# Include PCL directories
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 # Define the main executable
 add_executable(slam_foxglove
@@ -70,6 +78,7 @@ target_link_libraries(slam_foxglove
     ${Protobuf_LIBRARIES}
     Threads::Threads
     ${Boost_LIBRARIES}
+    ${PCL_LIBRARIES}
 )
 
 # Set include directories for target
