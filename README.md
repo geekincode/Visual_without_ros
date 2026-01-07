@@ -63,15 +63,9 @@ make
 - `src/foxglove_bridge.cpp`: Foxglove桥接器实现
 - `src/main.cpp`: 主程序入口
 
-## 使用场景
+## 演示
 
-此项目适用于：
-
-- SLAM算法开发与调试
-- 机器人定位可视化
-- 点云数据展示和处理
-- 传感器融合算法验证
-- 教育演示和原型开发
+![demo](docs/visual.gif)
 
 ## 许可证
 
