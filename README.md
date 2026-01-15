@@ -28,22 +28,31 @@
 ## 快速操作步骤（在项目根目录）
 
 1. 给予脚本执行权限（只需执行一次）：
-   bash -c "chmod +x scripts/fetch_and_prepare_foxglove.sh"
 
-2. 使用脚本准备 SDK（默认目标：项目根的 thirdparty/foxglove-src）：
-   bash -c "scripts/fetch_and_prepare_foxglove.sh \
-     https://github.com/foxglove/foxglove-sdk/releases/download/sdk%2Fv0.16.2/foxglove-v0.16.2-cpp-x86_64-unknown-linux-gnu.zip \
-     12ccf93169a800496d7e0f4428127e92cb00e1862a3e609f141a2aaae0c8946f"
+   ```bash
+   chmod +x scripts/fetch_and_prepare_foxglove.sh
+   ```
 
-   或者显式指定目标目录（例如仍放到 thirdparty）：
-   bash -c "scripts/fetch_and_prepare_foxglove.sh <URL> <SHA256> ${PWD}/thirdparty/foxglove-src"
+2. 使用脚本准备 SDK：
 
-   说明：脚本会下载 ZIP、校验 SHA256、解压并将包含 include/ 和 lib/ 的 SDK 根目录移动到目标目录。
+   ```bash
+   ./scripts/fetch_and_prepare_foxglove.sh
+   ```
+
+   脚本会自动下载 Foxglove SDK（v0.16.2）、校验 SHA256、解压并放置到 `thirdparty/foxglove-src`。
+
+   如需自定义，可传递参数：
+   ```bash
+   ./scripts/fetch_and_prepare_foxglove.sh [URL] [SHA256] [目标目录]
+   ```
 
 3. 配置并构建：
+
+   ```bash
    mkdir -p build && cd build
    cmake ..
    cmake --build .
+   ```
 
 如果配置阶段报错提示未找到 Foxglove SDK，请确认已按第 2 步运行脚本并将 SDK 放置在 project_root/thirdparty/foxglove-src（或你在 CMake 中指定的其他目录）。
 

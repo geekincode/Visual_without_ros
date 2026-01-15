@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: fetch_and_prepare_foxglove.sh <url> <sha256> [<dest_dir>]
-URL="${1:-}"
-SHA256_EXPECTED="${2:-}"
+# 默认 Foxglove SDK 下载地址和 SHA256（可通过参数覆盖）
+DEFAULT_URL="https://github.com/foxglove/foxglove-sdk/releases/download/sdk%2Fv0.16.2/foxglove-v0.16.2-cpp-x86_64-unknown-linux-gnu.zip"
+DEFAULT_SHA256="12ccf93169a800496d7e0f4428127e92cb00e1862a3e609f141a2aaae0c8946f"
+
+# Usage: fetch_and_prepare_foxglove.sh [<url>] [<sha256>] [<dest_dir>]
+URL="${1:-$DEFAULT_URL}"
+SHA256_EXPECTED="${2:-$DEFAULT_SHA256}"
 DEST_DIR="${3:-}"
 
 # 如果未提供 dest_dir，默认为项目根目录下 thirdparty/foxglove-src（脚本位于 scripts/）
@@ -11,11 +15,6 @@ if [[ -z "$DEST_DIR" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
   DEST_DIR="${PROJECT_ROOT}/thirdparty/foxglove-src"
-fi
-
-if [[ -z "$URL" || -z "$SHA256_EXPECTED" ]]; then
-  echo "Usage: $0 <url> <sha256> [<dest_dir>]" >&2
-  exit 2
 fi
 
 TMPDIR="$(mktemp -d)"
