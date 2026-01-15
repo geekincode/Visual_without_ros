@@ -4,8 +4,8 @@ project(foxglove_slam)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 首先检查是否在构建目录中已有Foxglove SDK
-set(FOXGLOVE_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/foxglove-src")
+# 首先检查项目源目录下 thirdparty 中的 Foxglove SDK（由脚本手动下载到此处）
+set(FOXGLOVE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/foxglove-src")
 
 if(EXISTS "${FOXGLOVE_SRC_DIR}/include/foxglove/server.hpp")
     message(STATUS "Using existing Foxglove SDK from: ${FOXGLOVE_SRC_DIR}")
@@ -18,26 +18,7 @@ if(EXISTS "${FOXGLOVE_SRC_DIR}/include/foxglove/server.hpp")
         "${FOXGLOVE_SRC_DIR}/src/server/*.cpp"
     )
 else()
-    message(WARNING "Foxglove SDK not found locally, downloading...")
-    
-    # Fetch Foxglove SDK
-    include(FetchContent)
-    FetchContent_Declare(
-        foxglove
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-        URL https://github.com/foxglove/foxglove-sdk/releases/download/sdk%2Fv0.16.2/foxglove-v0.16.2-cpp-x86_64-unknown-linux-gnu.zip
-        URL_HASH SHA256=12ccf93169a800496d7e0f4428127e92cb00e1862a3e609f141a2aaae0c8946f
-    )
-    FetchContent_MakeAvailable(foxglove)
-    
-    set(FOXGLOVE_SDK_INCLUDE_DIR ${foxglove_SOURCE_DIR}/include)
-    set(FOXGLOVE_SDK_LIBRARY ${foxglove_SOURCE_DIR}/lib/libfoxglove.a)
-    
-    # 包含Foxglove SDK源文件
-    file(GLOB FOXGLOVE_SOURCES CONFIGURE_DEPENDS
-        "${foxglove_SOURCE_DIR}/src/*.cpp"
-        "${foxglove_SOURCE_DIR}/src/server/*.cpp"
-    )
+    message(FATAL_ERROR "Foxglove SDK not found at: ${FOXGLOVE_SRC_DIR}\nPlease run the provided helper script to download and prepare the SDK, for example:\n  bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/fetch_and_prepare_foxglove.sh \\\n    https://github.com/foxglove/foxglove-sdk/releases/download/sdk%2Fv0.16.2/foxglove-v0.16.2-cpp-x86_64-unknown-linux-gnu.zip \\\n    12ccf93169a800496d7e0f4428127e92cb00e1862a3e609f141a2aaae0c8946f \\\n    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/foxglove-src\nThen re-run CMake.")
 endif()
 
 # Find required packages
