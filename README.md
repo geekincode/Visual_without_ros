@@ -63,6 +63,10 @@
 
 默认会在端口 8765 启动 WebSocket 服务。打开 Foxglove Studio，添加连接：ws://localhost:8765
 
+## 运行效果
+
+![video](docs/visual.gif)
+
 ## 数据流说明
 
 - /slam/pose：位姿（foxglove.PoseInFrame）  
